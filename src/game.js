@@ -14,9 +14,6 @@
   }
   window.addEventListener('resize', resize);
 
-  // Initialize canvas size
-  resize();
-
   // Game state
   let running = false;
   let entities = []; // falling animals
@@ -244,17 +241,20 @@
     const paradeInterval = setInterval(()=>{
       paradeX += 8;
       // draw overlay
-      ctx.clearRect(0,0,W,80);
-      ctx.fillStyle='#021027'; ctx.fillRect(0,0,W,80);
+      ctx.clearRect(0,0,W,100);
+      ctx.fillStyle='rgba(0,13,38,0.8)'; ctx.fillRect(0,0,W,100);
+      ctx.font = '60px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       for(let i=0;i<caught.length;i++){
-        ctx.drawImage(images[caught[i]], paradeX + i*60 - 20, 20, 40, 40);
+        ctx.fillText(caught[i], paradeX + i*60, 50);
       }
       if(paradeX > W + 100){ clearInterval(paradeInterval); canvas.removeEventListener('click', handleParadeClick); paradeFinished(); }
     },40);
   }
 
   function paradeFinished(){
-    alert('Thanks for playing!');
+    alert('Thanks for playing! Final Score: ' + score + ' | Best Combo: ' + maxCombo);
     // show landing again
     landing.style.display='block'; gameArea.style.display='none';
   }
