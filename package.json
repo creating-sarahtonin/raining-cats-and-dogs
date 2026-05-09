@@ -1,0 +1,9 @@
+{
+  "name": "raining-cats-and-dogs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "basic-http-server public 8080",
+    "preview": "" 
+  }
+}

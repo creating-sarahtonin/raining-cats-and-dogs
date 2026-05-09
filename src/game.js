@@ -1,4 +1,4 @@
-// Minimal game loop for Raining Cats and Dogs (MVP)
+// Raining Cats and Dogs - game loop with touch support (MVP)
 (function(){
   const startBtn = document.getElementById('startBtn');
   const landing = document.getElementById('landing');
@@ -59,9 +59,10 @@
         } else {
           // hazard: pop basket and remove 1-3 caught animals
           const remove = Math.min(caught.length, 1 + Math.floor(Math.random()*3));
-          caught.splice(-remove, remove);
+          if(remove>0) caught.splice(-remove, remove);
           score = Math.max(0, score - remove*20);
           scoreEl.textContent = score;
+          // simple pop visual could be added
         }
         entities.splice(i,1);
       } else if(e.y > H + 100){ entities.splice(i,1); }
@@ -70,11 +71,13 @@
 
   function draw(){
     ctx.clearRect(0,0,W,H);
-    // draw rain/storm background (simple lines)
-    ctx.fillStyle = '#021027';
-    ctx.fillRect(0,0,W,H);
+    // draw storm background (subtle)
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#0b2340'); g.addColorStop(1,'#021027');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    // light rain lines
     for(let i=0;i<80;i++){
-      ctx.strokeStyle = 'rgba(173,216,230,0.02)';
+      ctx.strokeStyle = 'rgba(173,216,230,0.03)';
       ctx.beginPath(); ctx.moveTo((i*53)%W,(i*17)%H); ctx.lineTo(((i*53)+10)%W, ((i*17)+30)%H); ctx.stroke();
     }
 
@@ -119,12 +122,11 @@
 
   function endGame(){
     running = false;
-    // parade: animate caught animals across screen
-    // Simple representation: draw them moving across top for 6s
+    // parade: animate caught animals across screen for a short sequence
     let paradeX = -100;
     const paradeInterval = setInterval(()=>{
       paradeX += 8;
-      // redraw overlay
+      // draw overlay
       ctx.clearRect(0,0,W,80);
       ctx.fillStyle='#021027'; ctx.fillRect(0,0,W,80);
       for(let i=0;i<caught.length;i++){
@@ -150,6 +152,19 @@
   // input handlers
   window.addEventListener('keydown', (e)=>{ if(e.key==='ArrowLeft') left=true; if(e.key==='ArrowRight') right=true; });
   window.addEventListener('keyup', (e)=>{ if(e.key==='ArrowLeft') left=false; if(e.key==='ArrowRight') right=false; });
+
+  // touch support: move basket by touching or dragging
+  function handleTouch(e){
+    if(!running) return;
+    const t = e.touches[0];
+    if(!t) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = t.clientX - rect.left;
+    basket.x = Math.max(0, Math.min(1, x / W));
+    e.preventDefault();
+  }
+  canvas.addEventListener('touchstart', handleTouch, { passive:false });
+  canvas.addEventListener('touchmove', handleTouch, { passive:false });
 
   startBtn.addEventListener('click', startGame);
 })();
