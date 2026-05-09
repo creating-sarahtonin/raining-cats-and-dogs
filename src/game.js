@@ -241,20 +241,17 @@
     const paradeInterval = setInterval(()=>{
       paradeX += 8;
       // draw overlay
-      ctx.clearRect(0,0,W,100);
-      ctx.fillStyle='rgba(0,13,38,0.8)'; ctx.fillRect(0,0,W,100);
-      ctx.font = '60px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.clearRect(0,0,W,80);
+      ctx.fillStyle='#021027'; ctx.fillRect(0,0,W,80);
       for(let i=0;i<caught.length;i++){
-        ctx.fillText(caught[i], paradeX + i*60, 50);
+        ctx.drawImage(images[caught[i]], paradeX + i*60 - 20, 20, 40, 40);
       }
       if(paradeX > W + 100){ clearInterval(paradeInterval); canvas.removeEventListener('click', handleParadeClick); paradeFinished(); }
     },40);
   }
 
   function paradeFinished(){
-    alert('Thanks for playing! Final Score: ' + score + ' | Best Combo: ' + maxCombo);
+    alert('Thanks for playing!');
     // show landing again
     landing.style.display='block'; gameArea.style.display='none';
   }
