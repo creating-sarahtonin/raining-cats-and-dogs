@@ -14,6 +14,9 @@
   }
   window.addEventListener('resize', resize);
 
+  // Initialize canvas size
+  resize();
+
   // Game state
   let running = false;
   let entities = []; // falling animals
