@@ -1,4 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <ellipse cx="64" cy="64" rx="56" ry="40" fill="#C0C0C0"/>
-  <text x="50%" y="55%" font-size="40" text-anchor="middle" fill="#000" font-family="sans-serif">P</text>
+  <!-- Tail (curved pink/tan) -->
+  <path d="M 75 95 Q 95 85 100 50 Q 102 30 98 15" stroke="#D4A574" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <!-- Body/Head (fluffy white circle) -->
+  <circle cx="64" cy="70" r="42" fill="#F5F5F5"/>
+  <!-- Ears (black circles) -->
+  <circle cx="40" cy="35" r="14" fill="#333"/>
+  <circle cx="88" cy="35" r="14" fill="#333"/>
+  <!-- Inner ear pink -->
+  <circle cx="40" cy="35" r="7" fill="#D4A574"/>
+  <circle cx="88" cy="35" r="7" fill="#D4A574"/>
+  <!-- Eyes (large black) -->
+  <circle cx="50" cy="65" r="8" fill="#000"/>
+  <circle cx="78" cy="65" r="8" fill="#000"/>
+  <!-- Eye shine (white highlight) -->
+  <circle cx="52" cy="62" r="3" fill="#fff"/>
+  <circle cx="80" cy="62" r="3" fill="#fff"/>
+  <!-- Nose (pink) -->
+  <ellipse cx="64" cy="80" rx="6" ry="5" fill="#E89B9B"/>
+  <!-- Mouth (simple smile) -->
+  <path d="M 64 85 Q 60 88 56 86" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M 64 85 Q 68 88 72 86" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Blush marks (pink circles) -->
+  <circle cx="35" cy="75" r="6" fill="#F4B9C4" opacity="0.7"/>
+  <circle cx="93" cy="75" r="6" fill="#F4B9C4" opacity="0.7"/>
+  <!-- Front paws (small pink) -->
+  <circle cx="45" cy="105" r="5" fill="#D4A574"/>
+  <circle cx="83" cy="105" r="5" fill="#D4A574"/>
 </svg>

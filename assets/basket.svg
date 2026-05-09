@@ -1,3 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="128" viewBox="0 0 256 128">
-  <rect x="32" y="40" width="192" height="56" rx="12" fill="#663300"/>
+  <!-- Basket weave pattern -->
+  <rect x="32" y="40" width="192" height="56" rx="12" fill="#8B4513"/>
+  <!-- Weave lines -->
+  <line x1="50" y1="40" x2="50" y2="96" stroke="#A0522D" stroke-width="2"/>
+  <line x1="80" y1="40" x2="80" y2="96" stroke="#A0522D" stroke-width="2"/>
+  <line x1="110" y1="40" x2="110" y2="96" stroke="#A0522D" stroke-width="2"/>
+  <line x1="140" y1="40" x2="140" y2="96" stroke="#A0522D" stroke-width="2"/>
+  <line x1="170" y1="40" x2="170" y2="96" stroke="#A0522D" stroke-width="2"/>
+  <line x1="200" y1="40" x2="200" y2="96" stroke="#A0522D" stroke-width="2"/>
+  <!-- Horizontal weave -->
+  <line x1="32" y1="55" x2="224" y2="55" stroke="#A0522D" stroke-width="1.5"/>
+  <line x1="32" y1="70" x2="224" y2="70" stroke="#A0522D" stroke-width="1.5"/>
+  <line x1="32" y1="85" x2="224" y2="85" stroke="#A0522D" stroke-width="1.5"/>
+  <!-- Highlight -->
+  <ellipse cx="90" cy="50" rx="40" ry="8" fill="#D2691E" opacity="0.3"/>
 </svg>

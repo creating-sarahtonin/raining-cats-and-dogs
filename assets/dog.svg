@@ -1,4 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <rect x="8" y="8" width="112" height="112" rx="20" fill="#8B4513"/>
-  <text x="50%" y="55%" font-size="48" text-anchor="middle" fill="#fff" font-family="sans-serif">D</text>
+  <!-- Body -->
+  <ellipse cx="64" cy="80" rx="32" ry="35" fill="#8B4513"/>
+  <!-- Neck -->
+  <rect x="54" y="55" width="20" height="25" fill="#8B4513"/>
+  <!-- Head -->
+  <circle cx="64" cy="45" r="28" fill="#A0522D"/>
+  <!-- Snout (long dog snout) -->
+  <ellipse cx="64" cy="60" rx="18" ry="14" fill="#D2691E"/>
+  <!-- Ears (floppy dog ears) -->
+  <ellipse cx="35" cy="32" rx="12" ry="22" fill="#8B4513"/>
+  <ellipse cx="93" cy="32" rx="12" ry="22" fill="#8B4513"/>
+  <!-- Eyes -->
+  <circle cx="50" cy="40" r="5" fill="#000"/>
+  <circle cx="78" cy="40" r="5" fill="#000"/>
+  <circle cx="51" cy="38" r="2" fill="#fff"/>
+  <circle cx="79" cy="38" r="2" fill="#fff"/>
+  <!-- Nose (black dog nose) -->
+  <ellipse cx="64" cy="58" rx="7" ry="6" fill="#000"/>
+  <!-- Mouth -->
+  <path d="M 64 64 L 64 72" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 58 68 Q 64 70 70 68" stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Tongue -->
+  <ellipse cx="64" cy="75" rx="5" ry="4" fill="#FF69B4"/>
+  <!-- Tail -->
+  <path d="M 92 75 Q 105 70 108 55" stroke="#8B4513" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- Front paws -->
+  <rect x="50" y="110" width="6" height="15" rx="3" fill="#8B4513"/>
+  <rect x="72" y="110" width="6" height="15" rx="3" fill="#8B4513"/>
 </svg>

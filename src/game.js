@@ -17,27 +17,78 @@
   // Game state
   let running = false;
   let entities = []; // falling animals
+  let raindrops = []; // animated rain
   let basket = { x: 0.5, w: 120, h: 30 };
   let left=false, right=false;
   let score=0;
   let caught=[];
-  let timeLeft=60;
+  let last = performance.now();
+  let timeLeft=30;
+  let initialTime=30;
   let spawnTimer=0;
+  let combo=0;
+  let maxCombo=0;
 
-  const types = [ 'cat','dog','raccoon','possum' ];
+  const goodEmojis = [ '🐈', '🐈‍⬛','🐕','🐕‍🦺','🐩','🐅' ];
+  const hazardEmojis = [ '🦝','🐭','🦨','🐢','🪰','🦡' ];
+  const rainEmoji = '💧';
+
+  // Don't need to load images anymore, using text emojis
+  function loadImages(){
+    return Promise.resolve();
+  }
 
   function spawn(){
-    const t = Math.random() < 0.75 ? (Math.random()<0.5?'cat':'dog') : (Math.random()<0.5?'raccoon':'possum');
-    const size = 24 + Math.random()*30;
-    entities.push({ type:t, x: Math.random()*(W-40)+20, y:-50, vy: 60+Math.random()*120, size });
+    const timeFraction = 1 - (timeLeft / initialTime);
+    const speedMultiplier = 1 + timeFraction * 2; // Speed increases over time
+    
+    let emoji;
+    let isGood = false;
+    const rand = Math.random();
+    
+    if(rand < 0.5){
+      // 50% rain
+      emoji = rainEmoji;
+    } else if(rand < 0.7){
+      // 20% good animals
+      emoji = goodEmojis[Math.floor(Math.random() * goodEmojis.length)];
+      isGood = true;
+    } else {
+      // 30% hazards
+      emoji = hazardEmojis[Math.floor(Math.random() * hazardEmojis.length)];
+    }
+    
+    const size = 32 + Math.random()*24;
+    const baseSpeed = 80 + Math.random()*150;
+    entities.push({ 
+      emoji, 
+      x: Math.random()*(W-40)+20, 
+      y:-50, 
+      vy: baseSpeed * speedMultiplier, 
+      size,
+      isGood,
+      rotation: Math.random() * Math.PI * 2
+    });
   }
 
   function update(dt){
     if(!running) return;
+    
+    // Dynamic difficulty - spawn rate increases over time
+    const timeFraction = 1 - (timeLeft / initialTime);
+    const spawnRate = 0.15 - timeFraction * 0.12; // Much faster spawning, from 0.15s to 0.03s
+    
     spawnTimer += dt;
-    if(spawnTimer > 0.5){ spawn(); spawnTimer=0; }
+    while(spawnTimer > spawnRate){ spawn(); spawnTimer -= spawnRate; }
+    
+    // Update raindrops
+    for(let i=raindrops.length-1;i>=0;i--){
+      raindrops[i].y += raindrops[i].speed * (1 + timeFraction * 0.8);
+      if(raindrops[i].y > H) raindrops.splice(i, 1);
+    }
+    
     // basket movement
-    const speed = 800; // px/s
+    const speed = 850; // px/s
     if(left) basket.x -= speed*dt/W; if(right) basket.x += speed*dt/W; // normalized
     basket.x = Math.max(0, Math.min(1, basket.x));
 
@@ -45,6 +96,7 @@
     for(let i=entities.length-1;i>=0;i--){
       const e = entities[i];
       e.y += e.vy*dt;
+      e.rotation += dt * 2;
       // check catch
       const bx = basket.x*W;
       const by = H - 40;
@@ -52,17 +104,19 @@
       const bh = basket.h;
       if(e.y + e.size/2 >= by - bh/2 && e.y - e.size/2 <= by + bh/2 && e.x >= bx - bw/2 && e.x <= bx + bw/2){
         // caught
-        if(e.type==='cat' || e.type==='dog'){
-          score += (e.type==='cat'?10:15);
-          caught.push(e.type);
+        if(e.emoji === rainEmoji){
+          // Rain doesn't count
+        } else if(e.isGood){
+          score += 10;
+          combo++;
+          if(combo > maxCombo) maxCombo = combo;
+          caught.push(e.emoji);
           scoreEl.textContent = score;
         } else {
-          // hazard: pop basket and remove 1-3 caught animals
-          const remove = Math.min(caught.length, 1 + Math.floor(Math.random()*3));
-          if(remove>0) caught.splice(-remove, remove);
-          score = Math.max(0, score - remove*20);
+          // hazard: lose combo and points
+          combo = 0;
+          score = Math.max(0, score - 15);
           scoreEl.textContent = score;
-          // simple pop visual could be added
         }
         entities.splice(i,1);
       } else if(e.y > H + 100){ entities.splice(i,1); }
@@ -71,46 +125,89 @@
 
   function draw(){
     ctx.clearRect(0,0,W,H);
-    // draw storm background (subtle)
+    // draw storm background (darker)
     const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#0b2340'); g.addColorStop(1,'#021027');
+    g.addColorStop(0,'#051a2d'); g.addColorStop(1,'#001018');
     ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-    // light rain lines
-    for(let i=0;i<80;i++){
-      ctx.strokeStyle = 'rgba(173,216,230,0.03)';
-      ctx.beginPath(); ctx.moveTo((i*53)%W,(i*17)%H); ctx.lineTo(((i*53)+10)%W, ((i*17)+30)%H); ctx.stroke();
+    
+    // Draw animated rain
+    ctx.strokeStyle = 'rgba(200,220,255,0.4)';
+    ctx.lineWidth = 2;
+    for(const drop of raindrops){
+      ctx.beginPath();
+      ctx.moveTo(drop.x, drop.y);
+      ctx.lineTo(drop.x - 2, drop.y + 8);
+      ctx.stroke();
     }
 
     // draw entities
     for(const e of entities){
-      if(e.type==='cat') ctx.fillStyle='orange';
-      else if(e.type==='dog') ctx.fillStyle='saddlebrown';
-      else ctx.fillStyle='gray';
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.size/2, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.font='10px sans-serif'; ctx.fillText(e.type[0].toUpperCase(), e.x-4, e.y+4);
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      ctx.rotate(e.emoji === rainEmoji ? 0 : e.rotation * 0.3);
+      ctx.font = `${e.size}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Add glow for hazards
+      if(!e.isGood && e.emoji !== rainEmoji){
+        ctx.shadowColor = 'rgba(255,50,50,0.6)';
+        ctx.shadowBlur = 15;
+      }
+      
+      ctx.fillText(e.emoji, 0, 0);
+      ctx.restore();
     }
     // draw basket
     const bx = basket.x*W;
-    ctx.fillStyle='#663300'; ctx.fillRect(bx - basket.w/2, H-60, basket.w, basket.h);
-    // draw caught count
-    ctx.fillStyle='#fff'; ctx.font='14px sans-serif'; ctx.fillText(`Caught: ${caught.length}`, 10, H-10);
+    ctx.font = '120px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🧺', bx, H-40);
+    // draw caught count and combo
+    if(combo > 0){
+      ctx.fillStyle = 'rgba(255,215,0,0.9)';
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText(`COMBO x${combo}`, W/2, 60);
+    }
   }
 
-  let last = performance.now();
   function loop(t){
     const dt = Math.min(0.1, (t - last)/1000);
     last = t;
     update(dt);
     draw();
+    
+    // Spawn new raindrops - more often
+    if(running && raindrops.length < 100){
+      for(let i=0; i<2; i++){
+        raindrops.push({
+          x: Math.random() * W,
+          y: -10,
+          speed: 180 + Math.random() * 200
+        });
+      }
+    }
+    
     if(running) requestAnimationFrame(loop);
   }
 
-  function startGame(){
+  async function startGame(){
+    await loadImages();
     landing.style.display='none';
     gameArea.style.display='block';
     resize();
     running = true;
-    score=0; caught=[]; timeLeft=60; scoreEl.textContent='0'; timeEl.textContent='60';
+    score=0; caught=[]; combo=0; maxCombo=0; timeLeft=30; initialTime=30; raindrops=[]; scoreEl.textContent='0'; timeEl.textContent='30';
+    
+    // Initialize rain - much more
+    for(let i=0; i<80; i++){
+      raindrops.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        speed: 180 + Math.random() * 200
+      });
+    }
     last = performance.now();
     // timer
     const timerId = setInterval(()=>{
@@ -124,27 +221,40 @@
     running = false;
     // parade: animate caught animals across screen for a short sequence
     let paradeX = -100;
+    let named = new Set();
+    function handleParadeClick(e){
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      for(let i=0;i<caught.length;i++){
+        const ax = paradeX + i*60;
+        if(x >= ax-20 && x <= ax+20 && y >= 20 && y <= 60 && !named.has(i)){
+          const name = prompt(`Name your ${caught[i]}:`) || '';
+          if(name){
+            localStorage.setItem(`rained_pet_name_${i}`, name);
+            named.add(i);
+          }
+        }
+      }
+    }
+    canvas.addEventListener('click', handleParadeClick);
     const paradeInterval = setInterval(()=>{
       paradeX += 8;
       // draw overlay
-      ctx.clearRect(0,0,W,80);
-      ctx.fillStyle='#021027'; ctx.fillRect(0,0,W,80);
+      ctx.clearRect(0,0,W,100);
+      ctx.fillStyle='rgba(0,13,38,0.8)'; ctx.fillRect(0,0,W,100);
+      ctx.font = '60px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       for(let i=0;i<caught.length;i++){
-        ctx.fillStyle = (caught[i]==='cat'?'orange':'saddlebrown');
-        ctx.beginPath(); ctx.arc(paradeX + i*60, 40, 20,0,Math.PI*2); ctx.fill();
+        ctx.fillText(caught[i], paradeX + i*60, 50);
       }
-      if(paradeX > W + 100){ clearInterval(paradeInterval); paradeFinished(); }
+      if(paradeX > W + 100){ clearInterval(paradeInterval); canvas.removeEventListener('click', handleParadeClick); paradeFinished(); }
     },40);
   }
 
   function paradeFinished(){
-    if(caught.length > 0){
-      // allow naming first pet
-      const first = caught[0];
-      const name = prompt(`You caught a ${first}! Give it a name:`) || '';
-      if(name) localStorage.setItem('rained_pet_name', name);
-      alert('Thanks for playing!');
-    } else alert('No pets caught — try again!');
+    alert('Thanks for playing! Final Score: ' + score + ' | Best Combo: ' + maxCombo);
     // show landing again
     landing.style.display='block'; gameArea.style.display='none';
   }
@@ -166,5 +276,5 @@
   canvas.addEventListener('touchstart', handleTouch, { passive:false });
   canvas.addEventListener('touchmove', handleTouch, { passive:false });
 
-  startBtn.addEventListener('click', startGame);
+  startBtn.addEventListener('click', () => startGame());
 })();
