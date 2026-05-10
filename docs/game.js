@@ -284,10 +284,14 @@
     }
 
     // lightning overlay
-    if(lightningAlpha > 0){
-      ctx.fillStyle = `rgba(255,255,255,${lightningAlpha * 0.25})`;
-      ctx.fillRect(0,0,W,H);
-    }
+   if(lightningAlpha > 0){
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = lightningAlpha * 0.18;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,W,H);
+  ctx.restore();
+}
 
     // draw basket
     const bx = basket.x*W;
