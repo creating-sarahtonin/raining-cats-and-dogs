@@ -355,6 +355,8 @@
 
   function endGame(){
     running = false;
+    setRainVolume(0);  // fade rain out
+    if(audioCtx) audioCtx.suspend();
     // parade: animate caught animals across screen for a short sequence
     let paradeX = -100;
     let named = new Set();
