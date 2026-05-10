@@ -260,13 +260,15 @@
         ctx.shadowBlur = 0;
         ctx.shadowColor = 'transparent';
         ctx.translate(e.x, e.y);
-        ctx.rotate(e.emoji === rainEmoji ? 0 : e.rotation * 0.3);
+        if (!/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+  ctx.rotate(e.emoji === rainEmoji ? 0 : e.rotation * 0.3);
+}
         ctx.font = `${e.size}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         if(!e.isGood && e.emoji !== rainEmoji){
-          ctx.shadowColor = 'rgba(255,50,50,0.6)';
-          ctx.shadowBlur = 15;
+         ctx.shadowColor = 'rgba(255,50,50,0.25)';
+         ctx.shadowBlur = 4;
         }
         ctx.fillText(e.emoji, 0, 0);
         ctx.restore();
@@ -289,18 +291,31 @@
         ctx.restore();
       }
 
-      // hard reset before basket — critical on mobile
+     // HARD RESET FOR IOS SAFARI
+      ctx.restore?.(); // harmless if no stack issue
+
+      ctx.setTransform(1,0,0,1,0,0);
+
       ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-      ctx.shadowColor = 'transparent';
       ctx.globalCompositeOperation = 'source-over';
 
-      // draw basket
-      const bx = basket.x*W;
-      ctx.font = '120px sans-serif';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.shadowColor = 'rgba(0,0,0,0)';
+
+      ctx.filter = 'none';
+
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#fff';
+
+      ctx.font = '120px Apple Color Emoji, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('🧺', bx, H-40);
+
+      // draw basket
+      const bx = basket.x * W;
+      ctx.fillText('🧺', bx, H - 40);
 
       // combo
       if(combo > 0){
