@@ -13,6 +13,7 @@
     H = canvas.height = gameArea.clientHeight;
   }
   window.addEventListener('resize', resize);
+  resize();
 
   // Game state
   let running = false;
@@ -28,14 +29,91 @@
   let spawnTimer=0;
   let combo=0;
   let maxCombo=0;
+  let burstParticles = [];
+  let lightningTimer = 0;
+  let nextLightning = 3;
+  let lightningAlpha = 0;
+  let audioCtx = null;
+  let rainSource = null;
+  let rainGain = null;
 
-  const goodEmojis = [ '🐈', '🐈‍⬛','🐕','🐕‍🦺','🐩','🐅' ];
-  const hazardEmojis = [ '🦝','🐭','🦨','🐢','🪰','🦡' ];
+  const goodEmojis = [ '🐈‍⬛','🐈','🐕','🦮','🐩', ];
+  const hazardEmojis = [ '🦝','🐭','🦨','🐢','🪰','🦡','🐍','🦇' ];
   const rainEmoji = '💧';
 
   // Don't need to load images anymore, using text emojis
   function loadImages(){
     return Promise.resolve();
+  }
+
+ function initAudio(){
+  if(audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // 10s flat white noise buffer — no fade, no pulsing loop seam
+  const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 10, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0; i<data.length; i++){
+    data[i] = (Math.random() * 2 - 1) * 0.8;
+  }
+
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+
+  // Lowpass: cuts hiss above 1200Hz
+  const lowpass = audioCtx.createBiquadFilter();
+  lowpass.type = 'lowpass';
+  lowpass.frequency.value = 1200;
+
+  // Highpass: cuts boomy rumble below 400Hz
+  const highpass = audioCtx.createBiquadFilter();
+  highpass.type = 'highpass';
+  highpass.frequency.value = 400;
+
+  rainGain = audioCtx.createGain();
+  rainGain.gain.value = 0;
+
+  // Chain: source → lowpass → highpass → gain → output
+  source.connect(lowpass);
+  lowpass.connect(highpass);
+  highpass.connect(rainGain);
+  rainGain.connect(audioCtx.destination);
+
+  source.start();
+  rainSource = source;
+}
+
+  function setRainVolume(value){
+    if(audioCtx && rainGain){
+      rainGain.gain.setTargetAtTime(value, audioCtx.currentTime, 0.1);
+    }
+  }
+
+  function playTone(frequency, duration, volume, type='sine'){
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, now);
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  }
+
+  function playMeow(){
+    if(!audioCtx) return;
+    playTone(523, 0.2, 0.12, 'triangle');
+    setTimeout(()=> playTone(660, 0.15, 0.08, 'triangle'), 120);
+  }
+
+  function playBark(){
+    if(!audioCtx) return;
+    playTone(220, 0.12, 0.18, 'square');
+    setTimeout(()=> playTone(170, 0.18, 0.12, 'square'), 120);
   }
 
   function spawn(){
@@ -49,12 +127,12 @@
     if(rand < 0.5){
       // 50% rain
       emoji = rainEmoji;
-    } else if(rand < 0.7){
-      // 20% good animals
+    } else if(rand < 0.875){
+      // 37.5% good animals
       emoji = goodEmojis[Math.floor(Math.random() * goodEmojis.length)];
       isGood = true;
     } else {
-      // 30% hazards
+      // 12.5% hazards
       emoji = hazardEmojis[Math.floor(Math.random() * hazardEmojis.length)];
     }
     
@@ -86,6 +164,14 @@
       raindrops[i].y += raindrops[i].speed * (1 + timeFraction * 0.8);
       if(raindrops[i].y > H) raindrops.splice(i, 1);
     }
+
+    // lightning timing
+    nextLightning -= dt;
+    if(nextLightning <= 0){
+      lightningAlpha = 1;
+      nextLightning = 2 + Math.random() * 4;
+    }
+    lightningAlpha = Math.max(0, lightningAlpha - dt * 1.8);
     
     // basket movement
     const speed = 850; // px/s
@@ -112,14 +198,38 @@
           if(combo > maxCombo) maxCombo = combo;
           caught.push(e.emoji);
           scoreEl.textContent = score;
+          playMeow();
         } else {
-          // hazard: lose combo and points
+          // hazard: lose combo and points, animate a few cats/dogs out of the basket
           combo = 0;
           score = Math.max(0, score - 15);
           scoreEl.textContent = score;
+          const burstCount = 3 + Math.floor(Math.random() * 3);
+          const choices = goodEmojis;
+          for(let j=0;j<burstCount;j++){
+            burstParticles.push({
+              emoji: choices[Math.floor(Math.random() * choices.length)],
+              x: bx + (Math.random()*bw - bw/2),
+              y: by - 10,
+              vx: (Math.random()-0.5) * 200,
+              vy: -150 - Math.random()*120,
+              life: 0,
+              size: 24 + Math.random()*14
+            });
+          }
+          playBark();
         }
         entities.splice(i,1);
       } else if(e.y > H + 100){ entities.splice(i,1); }
+    }
+    
+    for(let i=burstParticles.length-1;i>=0;i--){
+      const p = burstParticles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 400 * dt;
+      p.life += dt;
+      if(p.life > 1.2 || p.y > H + 50) burstParticles.splice(i,1);
     }
   }
 
@@ -136,7 +246,7 @@
     for(const drop of raindrops){
       ctx.beginPath();
       ctx.moveTo(drop.x, drop.y);
-      ctx.lineTo(drop.x - 2, drop.y + 8);
+      ctx.lineTo(drop.x - 2, drop.y + 12);
       ctx.stroke();
     }
 
@@ -153,11 +263,32 @@
       if(!e.isGood && e.emoji !== rainEmoji){
         ctx.shadowColor = 'rgba(255,50,50,0.6)';
         ctx.shadowBlur = 15;
+      } else {
+        ctx.shadowBlur = 0;
       }
       
       ctx.fillText(e.emoji, 0, 0);
       ctx.restore();
     }
+
+    // draw burst particles
+    for(const p of burstParticles){
+      ctx.save();
+      ctx.font = `${p.size}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = Math.max(0, 1 - p.life / 1.2);
+      ctx.fillText(p.emoji, p.x, p.y);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    // lightning overlay
+    if(lightningAlpha > 0){
+      ctx.fillStyle = `rgba(255,255,255,${lightningAlpha * 0.25})`;
+      ctx.fillRect(0,0,W,H);
+    }
+
     // draw basket
     const bx = basket.x*W;
     ctx.font = '120px sans-serif';
@@ -208,6 +339,11 @@
         speed: 180 + Math.random() * 200
       });
     }
+    initAudio();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    setRainVolume(0.15);
+    nextLightning = 1 + Math.random() * 2;
+    lightningAlpha = 0;
     last = performance.now();
     // timer
     const timerId = setInterval(()=>{
@@ -277,4 +413,5 @@
   canvas.addEventListener('touchmove', handleTouch, { passive:false });
 
   startBtn.addEventListener('click', () => startGame());
+  startBtn.addEventListener('touchend', (e) => { e.preventDefault(); startGame(); });
 })();
