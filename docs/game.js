@@ -138,15 +138,22 @@
     
     const size = 32 + Math.random()*24;
     const baseSpeed = 80 + Math.random()*150;
-    entities.push({ 
+      entities.push({ 
       emoji, 
       x: Math.random()*(W-40)+20, 
       y:-50, 
+      baseX: 0,
       vy: baseSpeed * speedMultiplier, 
       size,
       isGood,
-      rotation: Math.random() * Math.PI * 2
+      isHazard: !isGood && emoji !== rainEmoji,
+      rotation: Math.random() * Math.PI * 2,
+      wobbleOffset: Math.random() * 10,
+      pulseOffset: Math.random() * 10
     });
+
+    entities[entities.length - 1].baseX =
+      entities[entities.length - 1].x;
   }
 
   function update(dt){
@@ -181,6 +188,14 @@
     // update entities
     for(let i=entities.length-1;i>=0;i--){
       const e = entities[i];
+      if(e.isHazard){
+        e.x =
+          e.baseX +
+          Math.sin(
+            e.y * 0.02 +
+            e.wobbleOffset
+          ) * 35;
+      }
       e.y += e.vy*dt;
       e.rotation += dt * 2;
       // check catch
@@ -255,56 +270,77 @@
       }
 
       // draw entities
-      for (const e of entities) {
+    for (const e of entities) {
 
-        ctx.save();
+      ctx.save();
 
-        // FULL RESET
-        ctx.setTransform(1,0,0,1,0,0);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
+      // FULL RESET
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
 
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.shadowColor = 'transparent';
 
-        ctx.filter = 'none';
+      ctx.filter = 'none';
 
-        // Position
-        ctx.translate(
-          Math.round(e.x),
-          Math.round(e.y)
-        );
+      // Position
+      ctx.translate(
+        Math.round(e.x),
+        Math.round(e.y)
+      );
 
-        // DISABLE ROTATION ON IOS
-        const isiOS =
-          /iPad|iPhone|iPod/.test(navigator.userAgent);
+      // DISABLE ROTATION ON IOS
+      const isiOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-        if (!isiOS && e.emoji !== rainEmoji) {
-          ctx.rotate(e.rotation * 0.15);
-        }
-
-        // SAFARI NEEDS EXPLICIT EMOJI FONT
-        ctx.font =
-          `${Math.round(e.size)}px Apple Color Emoji, system-ui, sans-serif`;
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        // VERY LIGHT SHADOW ONLY
-        if (!e.isGood && e.emoji !== rainEmoji && !isiOS) {
-          ctx.shadowColor = 'rgba(255,50,50,0.2)';
-          ctx.shadowBlur = 3;
-        }
-
-        // FORCE FILLSTYLE
-        ctx.fillStyle = '#fff';
-
-        ctx.fillText(e.emoji, 0, 0);
-
-        ctx.restore();
+      if (!isiOS && e.emoji !== rainEmoji) {
+        ctx.rotate(e.rotation * 0.15);
       }
+
+      // SAFARI NEEDS EXPLICIT EMOJI FONT
+      ctx.font =
+        `${Math.round(e.size)}px Apple Color Emoji, system-ui, sans-serif`;
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // VERY LIGHT SHADOW ONLY
+      if (!e.isGood && e.emoji !== rainEmoji && !isiOS) {
+        ctx.shadowColor = 'rgba(255,50,50,0.2)';
+        ctx.shadowBlur = 3;
+      }
+       // HAZARD RED OUTLINE
+  if(e.isHazard){
+
+    // outer glow
+    ctx.shadowColor = 'rgba(255,40,40,0.9)';
+    ctx.shadowBlur = 18;
+
+    // red ring behind emoji
+    ctx.beginPath();
+    ctx.arc(
+      0,
+      0,
+      e.size * 0.42,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fillStyle = 'rgba(255,0,0,0.18)';
+    ctx.fill();
+
+  }
+
+      // FORCE FILLSTYLE
+      ctx.fillStyle = '#fff';
+
+      ctx.fillText(e.emoji, 0, 0);
+
+      ctx.restore();
+    }
 
       // hard reset shadow before burst particles
       ctx.shadowBlur = 0;
