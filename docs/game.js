@@ -255,22 +255,54 @@
       }
 
       // draw entities
-      for(const e of entities){
+      for (const e of entities) {
+
         ctx.save();
+
+        // FULL RESET
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+
         ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
         ctx.shadowColor = 'transparent';
-        ctx.translate(e.x, e.y);
-        if (!/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-  ctx.rotate(e.emoji === rainEmoji ? 0 : e.rotation * 0.3);
-}
-        ctx.font = `${e.size}px sans-serif`;
+
+        ctx.filter = 'none';
+
+        // Position
+        ctx.translate(
+          Math.round(e.x),
+          Math.round(e.y)
+        );
+
+        // DISABLE ROTATION ON IOS
+        const isiOS =
+          /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+        if (!isiOS && e.emoji !== rainEmoji) {
+          ctx.rotate(e.rotation * 0.15);
+        }
+
+        // SAFARI NEEDS EXPLICIT EMOJI FONT
+        ctx.font =
+          `${Math.round(e.size)}px Apple Color Emoji, system-ui, sans-serif`;
+
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        if(!e.isGood && e.emoji !== rainEmoji){
-         ctx.shadowColor = 'rgba(255,50,50,0.25)';
-         ctx.shadowBlur = 4;
+
+        // VERY LIGHT SHADOW ONLY
+        if (!e.isGood && e.emoji !== rainEmoji && !isiOS) {
+          ctx.shadowColor = 'rgba(255,50,50,0.2)';
+          ctx.shadowBlur = 3;
         }
+
+        // FORCE FILLSTYLE
+        ctx.fillStyle = '#fff';
+
         ctx.fillText(e.emoji, 0, 0);
+
         ctx.restore();
       }
 
