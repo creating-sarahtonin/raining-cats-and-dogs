@@ -234,79 +234,79 @@
   }
 
   function draw(){
-    ctx.clearRect(0,0,W,H);
-    // draw storm background (darker)
-    const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#051a2d'); g.addColorStop(1,'#001018');
-    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-    
-    // Draw animated rain
-    ctx.strokeStyle = 'rgba(200,220,255,0.4)';
-    ctx.lineWidth = 2;
-    for(const drop of raindrops){
-      ctx.beginPath();
-      ctx.moveTo(drop.x, drop.y);
-      ctx.lineTo(drop.x - 2, drop.y + 12);
-      ctx.stroke();
-    }
-
-    // draw entities
-    for(const e of entities){
-      ctx.save();
-      ctx.translate(e.x, e.y);
-      ctx.rotate(e.emoji === rainEmoji ? 0 : e.rotation * 0.3);
-      ctx.font = `${e.size}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.clearRect(0,0,W,H);
+      // draw storm background
+      const g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'#051a2d'); g.addColorStop(1,'#001018');
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
       
-      // Add glow for hazards
-      if(!e.isGood && e.emoji !== rainEmoji){
-        ctx.shadowColor = 'rgba(255,50,50,0.6)';
-        ctx.shadowBlur = 15;
-      } else {
-        ctx.shadowBlur = 0;
+      // Draw animated rain
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = 'rgba(200,220,255,0.4)';
+      ctx.lineWidth = 2;
+      for(const drop of raindrops){
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x - 2, drop.y + 12);
+        ctx.stroke();
       }
-      
-      ctx.fillText(e.emoji, 0, 0);
-      ctx.restore();
-    }
 
-    // draw burst particles
-    for(const p of burstParticles){
-      ctx.save();
-      ctx.font = `${p.size}px sans-serif`;
+      // draw entities
+      for(const e of entities){
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.translate(e.x, e.y);
+        ctx.rotate(e.emoji === rainEmoji ? 0 : e.rotation * 0.3);
+        ctx.font = `${e.size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if(!e.isGood && e.emoji !== rainEmoji){
+          ctx.shadowColor = 'rgba(255,50,50,0.6)';
+          ctx.shadowBlur = 15;
+        }
+        ctx.fillText(e.emoji, 0, 0);
+        ctx.restore();
+      }
+
+      // hard reset shadow before burst particles
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+
+      // draw burst particles
+      for(const p of burstParticles){
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.font = `${p.size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha = Math.max(0, 1 - p.life / 1.2);
+        ctx.fillText(p.emoji, p.x, p.y);
+        ctx.restore();
+      }
+
+      // hard reset before basket — critical on mobile
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+      ctx.globalCompositeOperation = 'source-over';
+
+      // draw basket
+      const bx = basket.x*W;
+      ctx.font = '120px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.globalAlpha = Math.max(0, 1 - p.life / 1.2);
-      ctx.fillText(p.emoji, p.x, p.y);
-      ctx.globalAlpha = 1;
-      ctx.restore();
-    }
+      ctx.fillText('🧺', bx, H-40);
 
-    // lightning overlay
-    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    if(lightningAlpha > 0 && !isMobile){
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = lightningAlpha * 0.18;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0,0,W,H);
-      ctx.restore();
+      // combo
+      if(combo > 0){
+        ctx.fillStyle = 'rgba(255,215,0,0.9)';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.fillText(`COMBO x${combo}`, W/2, 60);
+      }
     }
-
-    // draw basket
-    const bx = basket.x*W;
-    ctx.font = '120px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🧺', bx, H-40);
-    // draw caught count and combo
-    if(combo > 0){
-      ctx.fillStyle = 'rgba(255,215,0,0.9)';
-      ctx.font = 'bold 32px sans-serif';
-      ctx.fillText(`COMBO x${combo}`, W/2, 60);
-    }
-  }
 
   function loop(t){
     const dt = Math.min(0.1, (t - last)/1000);
