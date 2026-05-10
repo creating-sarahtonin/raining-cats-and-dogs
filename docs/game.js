@@ -38,7 +38,7 @@
   let rainGain = null;
 
   const goodEmojis = [ '🐈‍⬛','🐈','🐕','🦮','🐩', ];
-  const hazardEmojis = [ '🦝','🐭','🦨','🐢','🪰','🦡','🐍','🦇' ];
+  const hazardEmojis = [ '🦝','🦨','🐢','🪰','🦡','🐍','🦇' ];
   const rainEmoji = '💧';
 
   // Don't need to load images anymore, using text emojis
@@ -235,6 +235,8 @@
 
   function draw(){
       ctx.clearRect(0,0,W,H);
+      ctx.globalAlpha = 1;                   
+      ctx.globalCompositeOperation = 'source-over';
       // draw storm background
       const g = ctx.createLinearGradient(0,0,0,H);
       g.addColorStop(0,'#051a2d'); g.addColorStop(1,'#001018');
